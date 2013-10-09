@@ -61,10 +61,10 @@ coord foodTile;
 
 void startScreen(){
   /* Title */
-  myScreen.background(0,0,255);
+  myScreen.background(bgCol.r, bgCol.g, bgCol.b);
   
   /* Things that won't change in game */
-  myScreen.background(0,0,255);
+  myScreen.background(bgCol.r, bgCol.g, bgCol.b);
   myScreen.noFill();
   myScreen.stroke(255,0,0);
   myScreen.rect(1,1,screenWidth-2,screenHeight-2);
@@ -80,14 +80,14 @@ void startScreen(){
 /* Draw a segment of the snake */
 void drawSegment(int x, int y){
   myScreen.noStroke();
-  myScreen.fill(0,255,0);
+  myScreen.fill(snakeCol.r, snakeCol.g, snakeCol.b);
   myScreen.rect(x,y,tileSize,tileSize);
 }
 
 /* "Erase" a segment of the snake */
 void remSegment(int x, int y){
   myScreen.noStroke();
-  myScreen.fill(0,0,255);
+  myScreen.fill(bgCol.r, bgCol.g, bgCol.b);
   myScreen.rect(x,y,tileSize,tileSize);
 }
 
@@ -172,6 +172,7 @@ void loop(){
   
   startScreen(); /* TODO: pause until button is pressed */
   
+  /* Main brain game frame */
   while(!collision){
     
     /* Get input from pressbuttons */

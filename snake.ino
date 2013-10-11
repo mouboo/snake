@@ -37,9 +37,9 @@ struct colour_struct{
 };
 typedef struct colour_struct colour;
 
-colour bgCol = {0,0,255};
+colour bgCol = {93,200,255};
 colour snakeCol = {0,255,0};
-colour foodCol = {255,255,0};
+colour foodCol = {253,230,62};
 
 struct coord_struct{
   unsigned char x;
@@ -61,20 +61,21 @@ coord foodTile;
 
 void startScreen(){
   /* Title */
-  myScreen.background(bgCol.r, bgCol.g, bgCol.b);
+  myScreen.background(245, 78, 253);
+  delay(2000);
   
-  /* Things that won't change in game */
-  myScreen.background(bgCol.r, bgCol.g, bgCol.b);
-  myScreen.noFill();
-  myScreen.stroke(255,0,0);
-  myScreen.rect(1,1,screenWidth-2,screenHeight-2);
-  myScreen.rect(0,0,screenWidth,screenHeight);
+  /* Background and framing */
+  myScreen.fill(bgCol.r,bgCol.g,bgCol.b);
+  myScreen.rect(3,2,screenWidth-6,screenHeight-4);
 
-  /* The snake data before the game starts */
-  for (int i = 50; i<=80; i+=6){
-    addFirst(i,60);
+  /* The snake and food data before the game starts */
+  for (int i = 11; i<=41; i+=6){
+    addFirst(i,4);
     drawSegment(head->x, head->y);
   }
+  foodTile.x = 5;
+  foodTile.y = 4;
+  drawFood(foodTile.x, foodTile.y);
 }
 
 /* Draw a segment of the snake */
@@ -82,6 +83,13 @@ void drawSegment(int x, int y){
   myScreen.noStroke();
   myScreen.fill(snakeCol.r, snakeCol.g, snakeCol.b);
   myScreen.rect(x,y,tileSize,tileSize);
+}
+
+/* Draw a food */
+void drawFood(int x, int y){
+  myScreen.noStroke();
+  myScreen.fill(foodCol.r, foodCol.g, foodCol.b);
+  myScreen.rect(x,y,tileSize,tileSize); 
 }
 
 /* "Erase" a segment of the snake */
@@ -195,7 +203,7 @@ void loop(){
     
     delay(5); /* Just to be kind to the CPU */
     
-    if (millis()-timestamp > 100){
+    if (millis()-timestamp > 300){
       /* Update, draw, and check things */
       temp = head;
       temp->x += moveTo.x;
@@ -214,7 +222,8 @@ void loop(){
       }
       
       if (isGrow()){
-        growBy++;  
+        growBy++;
+        /* TODO: add new foodTile */
       }
 
       if (isCollision()){

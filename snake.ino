@@ -74,14 +74,16 @@ void startScreen(){
   myScreen.rect(3,2,screenWidth-6,screenHeight-4);
 
   /* The snake and food data before the game starts */
-  for (int i = 11; i<=41; i+=6){
-    addFirst(i,4);
+  for (int i = 29; i<=53; i+=6){
+    addFirst(i,52);
     drawSegment(head->x, head->y);
   }
+  
   /* TODO: "random placement, not on forbidden tiles"-function */
   foodTile.x = 5;
   foodTile.y = 4;
   drawFood(foodTile.x, foodTile.y);
+  delay(1000);
 }
 
 /* Input the incremental move using the pushbuttons */
@@ -204,8 +206,7 @@ void setup(){
 
 void loop(){
   
-  startScreen(); /* TODO: pause until button is pressed */
-  
+  startScreen();
   /* Main brain game frame */
   while(!collision){
 
@@ -215,14 +216,14 @@ void loop(){
     
     if (millis()-timestamp > 300){
       /* Update, draw, and check things */
-      temp = head;
-      temp->x += moveTo.x;
-      temp->y += moveTo.y;
-      addFirst(temp->x,temp->y);
+      coord movetemp;
+      movetemp.x = head->x + moveTo.x;
+      movetemp.y = head->y + moveTo.y;
+      
+      addFirst(movetemp.x,movetemp.y);
       
       /* Draw */
       drawSegment(head->x, head->y);
-
       if (growBy){
         growBy--;
         score += 1;    

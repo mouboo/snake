@@ -64,6 +64,11 @@ void startScreen(){
   myScreen.setTextSize(1);
   myScreen.text("press button to start",10, 80);
   
+  while (moveTo.x == 0 && moveTo.y == 0){
+    getInput();
+    delay(5);
+  }
+  
   /* Background and framing */
   myScreen.fill(bgCol.r,bgCol.g,bgCol.b);
   myScreen.rect(3,2,screenWidth-6,screenHeight-4);

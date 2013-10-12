@@ -31,9 +31,7 @@ int score = 5;
 char scoreChars[5];
 
 struct colour_struct{
-  int r;
-  int g;
-  int b;
+  int r,g,b;
 };
 typedef struct colour_struct colour;
 
@@ -42,8 +40,7 @@ colour snakeCol = {0,255,0};
 colour foodCol = {253,230,62};
 
 struct coord_struct{
-  unsigned char x;
-  unsigned char y;
+  unsigned char x,y;
   struct coord_struct *next_ptr; 
 };
 typedef struct coord_struct coord;
@@ -52,7 +49,7 @@ coord *new_ptr;
 coord *temp;
 coord *head = NULL;
 
-coord moveTo;
+coord moveTo = {0,0};
 coord foodTile;
 
 /***********************************************************************
@@ -62,7 +59,10 @@ coord foodTile;
 void startScreen(){
   /* Title */
   myScreen.background(245, 78, 253);
-  delay(2000);
+  myScreen.setTextSize(4);
+  myScreen.text("Snake",10,10);
+  myScreen.setTextSize(1);
+  myScreen.text("press button to start",10, 80);
   
   /* Background and framing */
   myScreen.fill(bgCol.r,bgCol.g,bgCol.b);
@@ -73,9 +73,30 @@ void startScreen(){
     addFirst(i,4);
     drawSegment(head->x, head->y);
   }
+  /* TODO: "random placement, not on forbidden tiles"-function */
   foodTile.x = 5;
   foodTile.y = 4;
   drawFood(foodTile.x, foodTile.y);
+}
+
+/* Input the incremental move using the pushbuttons */
+void getInput(){
+    if (digitalRead(pbLeft) == HIGH){
+      moveTo.x = -tileSize; 
+      moveTo.y = 0;  
+    }
+    else if (digitalRead(pbDown) == HIGH){
+      moveTo.x = 0; 
+      moveTo.y = tileSize;  
+    }
+    else if (digitalRead(pbUp) == HIGH){
+      moveTo.x = 0; 
+      moveTo.y = -tileSize;  
+    }
+    else if (digitalRead(pbRight) == HIGH){
+      moveTo.x = tileSize; 
+      moveTo.y = 0;  
+    }
 }
 
 /* Draw a segment of the snake */
@@ -182,25 +203,9 @@ void loop(){
   
   /* Main brain game frame */
   while(!collision){
-    
-    /* Get input from pressbuttons */
-    if (digitalRead(pbLeft) == HIGH){
-      moveTo.x = -tileSize; 
-      moveTo.y = 0;  
-    }
-    else if (digitalRead(pbDown) == HIGH){
-      moveTo.x = 0; 
-      moveTo.y = tileSize;  
-    }
-    else if (digitalRead(pbUp) == HIGH){
-      moveTo.x = 0; 
-      moveTo.y = -tileSize;  
-    }
-    else if (digitalRead(pbRight) == HIGH){
-      moveTo.x = tileSize; 
-      moveTo.y = 0;  
-    }
-    
+
+    /* Pushbutton input */
+    getInput();
     delay(5); /* Just to be kind to the CPU */
     
     if (millis()-timestamp > 300){

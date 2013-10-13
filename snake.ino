@@ -27,7 +27,7 @@ int tileSize = 6;
 long timestamp;
 int growBy = 0;
 int collision = 0;
-int score = 5;
+int score = 0;
 char scoreChars[5];
 
 struct colour_struct{
@@ -36,7 +36,7 @@ struct colour_struct{
 typedef struct colour_struct colour;
 
 colour bgCol = {93,200,255};
-colour snakeCol = {0,255,0};
+colour snakeCol = {245, 78, 253};
 colour foodCol = {253,230,62};
 
 struct coord_struct{
@@ -57,9 +57,20 @@ coord foodTile;
  */
 
 void startScreen(){
+  /* Reset variables/everything */
+  collision = 0;
+  while(head){
+    remLast();
+  }
+  moveTo.x = 0;
+  moveTo.y = 0;
+  int score = 0;
+  int growBy = 0;
+  
   /* Title */
   myScreen.background(245, 78, 253);
   myScreen.setTextSize(4);
+  myScreen.stroke(255,255,255);
   myScreen.text("Snake",10,10);
   myScreen.setTextSize(1);
   myScreen.text("press button to start",10, 80);
@@ -70,6 +81,7 @@ void startScreen(){
   }
   
   /* Background and framing */
+  myScreen.stroke(0,0,0);
   myScreen.fill(bgCol.r,bgCol.g,bgCol.b);
   myScreen.rect(3,2,screenWidth-6,screenHeight-4);
 
@@ -157,7 +169,7 @@ void remLast(){
 
 /* Check if a coordinate exist in the linked list */
 int isMember(int x, int y){
-   temp = head;
+   temp = head->next_ptr;
    while(temp){
      if (temp->x == x && temp->y ==y){
        return 1; 
@@ -178,17 +190,27 @@ int isGrow(){
 
 /* Check if the snake head is on a forbidden tile and should die :/ */
 int isCollision(){
-   /* TODO: check for collision */
+  if (isMember(head->x,head->y)){
+    return 1;
+  }
+  if(head->x < 5 || head->x > 149 || head->y < 4 || head->y > 118){
+    return 1;
+  }
+  return 0;
 }
 
 /* Print score etc before starting over */
 void endScreen(){
+  myScreen.background(0, 255, 0);
+  myScreen.stroke(255,255,255);
   String scorestring = String(score);
   scorestring.toCharArray(scoreChars,5);
   
   myScreen.text("Game over", 40, 40);
   myScreen.text("Score:", 40, 50);
-  myScreen.text(scoreChars, 60, 50); 
+  myScreen.text(scoreChars, 80, 50);
+
+  delay(1000); 
 }
 
 /***********************************************************************
@@ -197,7 +219,7 @@ void endScreen(){
 
 void setup(){
   myScreen.begin();
-  randomSeed(analogRead(0));
+/*  randomSeed(analogRead(0)); */
 }
 
 /***********************************************************************
@@ -245,5 +267,5 @@ void loop(){
   }
   
   endScreen();
-  delay(5000); /* TODO: pause until button is pressed */
+  delay(2000); /* TODO: pause until button is pressed */
 }

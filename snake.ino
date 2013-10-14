@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <TFT.h>
 #include <SPI.h>
+//#include <SD.h>
+#include <TFT.h>
  
 /* TFT pins */
-#define CS   10
+#define LCD_CS   10
+#define SD_CS 4
 #define DC   9
 #define RESET  8
 
@@ -18,7 +20,7 @@
  * VARIABLES
  */
 
-TFT myScreen = TFT(CS, DC, RESET);  /* x: 0-160  y: 0-128 */
+TFT myScreen = TFT(LCD_CS, DC, RESET);  /* x: 0-160  y: 0-128 */
 
 int screenWidth = myScreen.width();
 int screenHeight = myScreen.height();
@@ -29,6 +31,7 @@ int growBy = 0;
 int collision = 0;
 int score = 0;
 char scoreChars[5];
+
 
 struct colour_struct{
   int r,g,b;
@@ -50,15 +53,23 @@ coord *temp;
 coord *head = NULL;
 
 coord moveTo = {0,0};
-coord foodTile;
+coord foodTile = {5,4};
 
 /***********************************************************************
  * FUNCTIONS
  */
+void newFoodTile(){
+
+  foodTile.x = int(5 + (random(0,24)*6));
+  foodTile.y = int(4 + (random(0,19)*6));
+}
 
 void startScreen(){
   /* Reset variables/everything */
+  foodTile.x = 5;
+  foodTile.y = 4;
   collision = 0;
+  score = 0;
   while(head){
     remLast();
   }
@@ -68,6 +79,10 @@ void startScreen(){
   int growBy = 0;
   
   /* Title */
+//  PImage image;
+/*  image = myScreen.loadImage("startscreen.bmp"); */
+//  myScreen.image(image, 0, 0);
+  
   myScreen.background(245, 78, 253);
   myScreen.setTextSize(4);
   myScreen.stroke(255,255,255);
@@ -92,11 +107,13 @@ void startScreen(){
   }
   
   /* TODO: "random placement, not on forbidden tiles"-function */
-  foodTile.x = 5;
-  foodTile.y = 4;
+//  foodTile.x = 5;
+//  foodTile.y = 4;
+  newFoodTile();
   drawFood(foodTile.x, foodTile.y);
-  delay(1000);
 }
+
+
 
 /* Input the incremental move using the pushbuttons */
 void getInput(){
@@ -219,7 +236,8 @@ void endScreen(){
 
 void setup(){
   myScreen.begin();
-/*  randomSeed(analogRead(0)); */
+//  SD.begin(SD_CS);
+  randomSeed(analogRead(0));
 }
 
 /***********************************************************************
@@ -236,7 +254,7 @@ void loop(){
     getInput();
     delay(5); /* Just to be kind to the CPU */
     
-    if (millis()-timestamp > 300){
+    if (millis()-timestamp > 100){
       /* Update, draw, and check things */
       coord movetemp;
       movetemp.x = head->x + moveTo.x;
@@ -256,7 +274,8 @@ void loop(){
       
       if (isGrow()){
         growBy++;
-        /* TODO: add new foodTile */
+        newFoodTile();
+        drawFood(foodTile.x, foodTile.y);
       }
 
       if (isCollision()){

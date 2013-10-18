@@ -1,9 +1,7 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <SPI.h>
-//#include <SD.h>
 #include <TFT.h>
- 
+#include "structworkaround.h"
+
 /* TFT pins */
 #define LCD_CS   10
 #define SD_CS 4
@@ -11,153 +9,38 @@
 #define RESET  8
 
 /* Pushbutton pins */
-#define pbLeft 7
-#define pbDown 6
-#define pbUp 3
-#define pbRight 2
+#define PBLEFT 7
+#define PBDOWN 6
+#define PBUP 3
+#define PBRIGHT 2
 
-/***********************************************************************
- * VARIABLES
- */
+#define screenWidth 160
+#define screenHeight 128
+#define tileSize 6
 
-TFT myScreen = TFT(LCD_CS, DC, RESET);  /* x: 0-160  y: 0-128 */
 
-int screenWidth = myScreen.width();
-int screenHeight = myScreen.height();
-int tileSize = 6;
+TFT screen = TFT(LCD_CS, DC, RESET);
 
-long timestamp;
-int growBy = 0;
-int collision = 0;
+long timestamp = 0;
 int score = 0;
-char scoreChars[5];
-
-
-struct colour_struct{
-  int r,g,b;
-};
-typedef struct colour_struct colour;
+int collision = 0;
+int goX = 0;
+int goY = 0;
 
 colour bgCol = {93,200,255};
 colour snakeCol = {245, 78, 253};
 colour foodCol = {253,230,62};
 
-struct coord_struct{
-  unsigned char x,y;
-  struct coord_struct *next_ptr; 
-};
-typedef struct coord_struct coord;
-
 coord *new_ptr;
 coord *temp;
 coord *head = NULL;
 
-coord moveTo = {0,0};
-coord foodTile = {5,4};
-
-/***********************************************************************
- * FUNCTIONS
+/*****************************************************************
+ *  FUNCTIONS
  */
-void newFoodTile(){
 
-  foodTile.x = int(5 + (random(0,24)*6));
-  foodTile.y = int(4 + (random(0,19)*6));
-}
-
-void startScreen(){
-  /* Reset variables/everything */
-  foodTile.x = 5;
-  foodTile.y = 4;
-  collision = 0;
-  score = 0;
-  while(head){
-    remLast();
-  }
-  moveTo.x = 0;
-  moveTo.y = 0;
-  int score = 0;
-  int growBy = 0;
-  
-  /* Title */
-//  PImage image;
-/*  image = myScreen.loadImage("startscreen.bmp"); */
-//  myScreen.image(image, 0, 0);
-  
-  myScreen.background(245, 78, 253);
-  myScreen.setTextSize(4);
-  myScreen.stroke(255,255,255);
-  myScreen.text("Snake",10,10);
-  myScreen.setTextSize(1);
-  myScreen.text("press button to start",10, 80);
-  
-  while (moveTo.x == 0 && moveTo.y == 0){
-    getInput();
-    delay(5);
-  }
-  
-  /* Background and framing */
-  myScreen.stroke(0,0,0);
-  myScreen.fill(bgCol.r,bgCol.g,bgCol.b);
-  myScreen.rect(3,2,screenWidth-6,screenHeight-4);
-
-  /* The snake and food data before the game starts */
-  for (int i = 29; i<=53; i+=6){
-    addFirst(i,52);
-    drawSegment(head->x, head->y);
-  }
-  
-  /* TODO: "random placement, not on forbidden tiles"-function */
-//  foodTile.x = 5;
-//  foodTile.y = 4;
-  newFoodTile();
-  drawFood(foodTile.x, foodTile.y);
-}
-
-
-
-/* Input the incremental move using the pushbuttons */
-void getInput(){
-    if (digitalRead(pbLeft) == HIGH){
-      moveTo.x = -tileSize; 
-      moveTo.y = 0;  
-    }
-    else if (digitalRead(pbDown) == HIGH){
-      moveTo.x = 0; 
-      moveTo.y = tileSize;  
-    }
-    else if (digitalRead(pbUp) == HIGH){
-      moveTo.x = 0; 
-      moveTo.y = -tileSize;  
-    }
-    else if (digitalRead(pbRight) == HIGH){
-      moveTo.x = tileSize; 
-      moveTo.y = 0;  
-    }
-}
-
-/* Draw a segment of the snake */
-void drawSegment(int x, int y){
-  myScreen.noStroke();
-  myScreen.fill(snakeCol.r, snakeCol.g, snakeCol.b);
-  myScreen.rect(x,y,tileSize,tileSize);
-}
-
-/* Draw a food */
-void drawFood(int x, int y){
-  myScreen.noStroke();
-  myScreen.fill(foodCol.r, foodCol.g, foodCol.b);
-  myScreen.rect(x,y,tileSize,tileSize); 
-}
-
-/* "Erase" a segment of the snake */
-void remSegment(int x, int y){
-  myScreen.noStroke();
-  myScreen.fill(bgCol.r, bgCol.g, bgCol.b);
-  myScreen.rect(x,y,tileSize,tileSize);
-}
-
-/* Add x and y as a coord first in the linked list */
-void addFirst(int x, int y){
+void 
+addFirst(int x, int y){
     new_ptr = (coord *)malloc(sizeof(coord));
     new_ptr->x = x;
     new_ptr->y = y;
@@ -165,8 +48,8 @@ void addFirst(int x, int y){
     head = new_ptr;
 }
 
-/* Remove the last item in the linked list */
-void remLast(){
+void 
+remLast(){
   coord *last;  
   temp = head;
   last = temp;
@@ -178,113 +61,160 @@ void remLast(){
     free(temp);
     head = NULL;
   } else {
-    remSegment(temp->x,temp->y);
+    drawRect(temp->x,temp->y,bgCol); /* draw */
     free(last->next_ptr);
     last->next_ptr = NULL;  
   }
 }
-
-/* Check if a coordinate exist in the linked list */
-int isMember(int x, int y){
-   temp = head->next_ptr;
-   while(temp){
-     if (temp->x == x && temp->y ==y){
-       return 1; 
-     }
-     temp = temp->next_ptr;
-   }
-   return 0;  
+  
+void
+startScreen(){
+  reset();
+  
+  screen.background(245, 78, 253);
+  screen.setTextSize(4);
+  screen.stroke(0,255,0);
+  screen.text("Snake",10,10);
+  screen.setTextSize(1);
+  screen.text("press button to start",10, 80);
+  
+  while (goX == 0 && goY == 0){
+    getInput();
+    delay(5);
+  }
+  
+  screen.stroke(0,0,0);
+  screen.fill(bgCol.r,bgCol.g,bgCol.b);
+  screen.rect(3,2,screenWidth-6,screenHeight-4);
+  
+  for (int i = 29; i<=53; i+=6){
+    addFirst(i,52);
+    drawRect(head->x, head->y,snakeCol);
+  }
+  
+  putFood();
+}
+ 
+void
+reset(){
+  goX = 0;
+  goY = 0;
+  collision = 0;  
+  score = 0;
+  while(head){
+    remLast();
+  }
 }
 
-/* Check if the snake head is on a foodTile and should grow */
-int isGrow(){
-  if(head->x == foodTile.x && head->y == foodTile.y){
-   return 1; 
+void 
+getInput(){
+    if (digitalRead(PBLEFT) == HIGH){
+      goX = -tileSize; 
+      goY = 0;  
+    }
+    else if (digitalRead(PBDOWN) == HIGH){
+      goX = 0; 
+      goY = tileSize;  
+    }
+    else if (digitalRead(PBUP) == HIGH){
+      goX = 0; 
+      goY = -tileSize;  
+    }
+    else if (digitalRead(PBRIGHT) == HIGH){
+      goX = tileSize; 
+      goY = 0;  
+    }
+}
+
+int 
+isGrow(){
+  if(head->x == food.x && head->y == food.y){
+    return 1; 
   } else {
     return 0;
   }
 }
 
-/* Check if the snake head is on a forbidden tile and should die :/ */
-int isCollision(){
-  if (isMember(head->x,head->y)){
-    return 1;
+int
+isCollision(){
+  temp = head->next_ptr;
+  while(temp){
+    if (temp->x == head->x && temp->y == head->y){
+      return 1;
+    }
+    temp = temp->next_ptr;  
   }
   if(head->x < 5 || head->x > 149 || head->y < 4 || head->y > 118){
     return 1;
   }
   return 0;
 }
+ 
+void
+putFood(){
+  int validPlace = 0;
+  while (!validPlace){
+    food.x = 5 + (int)random(0,24)*6;
+    food.y = 4 + (int)random(0,19)*6;
+    if (food.x != head->x && food.y != head->y){
+      validPlace = 1; 
+    }
+  }
+  drawRect(food.x, food.y, foodCol);
+}
 
-/* Print score etc before starting over */
-void endScreen(){
-  myScreen.background(0, 255, 0);
-  myScreen.stroke(255,255,255);
+void 
+drawRect(int x, int y, colour c){
+  screen.noStroke();
+  screen.fill(c.r, c.g, c.b);
+  screen.rect(x,y,tileSize,tileSize);
+}
+
+void
+endScreen(){
+  char scoreChars[5];
+  screen.background(0, 255, 0);
+  screen.stroke(255,255,255);
   String scorestring = String(score);
   scorestring.toCharArray(scoreChars,5);
   
-  myScreen.text("Game over", 40, 40);
-  myScreen.text("Score:", 40, 50);
-  myScreen.text(scoreChars, 80, 50);
-
-  delay(1000); 
+  screen.text("Game over", 40, 40);
+  screen.text("Score:", 40, 50);
+  screen.text(scoreChars, 80, 50);  
+  delay(1000);
 }
 
-/***********************************************************************
- * SETUP
- */
-
-void setup(){
-  myScreen.begin();
-//  SD.begin(SD_CS);
+void
+setup(){
+  screen.begin();
   randomSeed(analogRead(0));
 }
 
-/***********************************************************************
- * LOOP
- */
-
-void loop(){
-  
+void
+loop(){
   startScreen();
-  /* Main brain game frame */
-  while(!collision){
-
-    /* Pushbutton input */
+  while (!collision){
     getInput();
-    delay(5); /* Just to be kind to the CPU */
-    
-    if (millis()-timestamp > 100){
-      /* Update, draw, and check things */
-      coord movetemp;
-      movetemp.x = head->x + moveTo.x;
-      movetemp.y = head->y + moveTo.y;
-      
-      addFirst(movetemp.x,movetemp.y);
-      
-      /* Draw */
-      drawSegment(head->x, head->y);
-      if (growBy){
-        growBy--;
-        score += 1;    
+    delay(5);
+    if (millis()-timestamp > 200){
+      addFirst((head->x + goX), (head->y + goY));
+      drawRect(head->x,head->y,snakeCol);
+      if (food.growBy){
+        food.growBy--;
+        score += 1;
       }
       else {
         remLast();
       }
-      
       if (isGrow()){
-        growBy++;
-        newFoodTile();
-        drawFood(foodTile.x, foodTile.y);
+        food.growBy++;
+        putFood(); 
       }
-
       if (isCollision()){
         collision = 1;
       }
       timestamp = millis();
     }
   }
-  
-  endScreen();
-  delay(2000); /* TODO: pause until button is pressed */
+  endScreen();  
 }

@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <TFT.h>
-#include "structworkaround.h"
+#include "colour.h"
 
 /* TFT pins */
 #define LCD_CS   10
@@ -27,13 +27,22 @@ int collision = 0;
 int goX = 0;
 int goY = 0;
 
-colour bgCol = {93,200,255};
-colour snakeCol = {245, 78, 253};
-colour foodCol = {253,230,62};
+struct coord_struct{
+  int x;
+  int y;
+  struct coord_struct *next_ptr; 
+};
+typedef struct coord_struct coord;
 
 coord *new_ptr;
 coord *temp;
 coord *head = NULL;
+
+struct {
+  int x;
+  int y;
+  int growBy;
+} food;
 
 /*****************************************************************
  *  FUNCTIONS
@@ -61,7 +70,7 @@ remLast(){
     free(temp);
     head = NULL;
   } else {
-    drawRect(temp->x,temp->y,bgCol); /* draw */
+    drawRect(temp->x,temp->y,&bgCol); /* draw */
     free(last->next_ptr);
     last->next_ptr = NULL;  
   }
@@ -89,7 +98,7 @@ startScreen(){
   
   for (int i = 29; i<=53; i+=6){
     addFirst(i,52);
-    drawRect(head->x, head->y,snakeCol);
+    drawRect(head->x, head->y,&snakeCol);
   }
   
   putFood();
@@ -160,13 +169,13 @@ putFood(){
       validPlace = 1; 
     }
   }
-  drawRect(food.x, food.y, foodCol);
+  drawRect(food.x, food.y, &foodCol);
 }
 
 void 
-drawRect(int x, int y, colour c){
+drawRect(int x, int y, colour *c){
   screen.noStroke();
-  screen.fill(c.r, c.g, c.b);
+  screen.fill(c->r, c->g, c->b);
   screen.rect(x,y,tileSize,tileSize);
 }
 
@@ -198,7 +207,7 @@ loop(){
     delay(5);
     if (millis()-timestamp > 200){
       addFirst((head->x + goX), (head->y + goY));
-      drawRect(head->x,head->y,snakeCol);
+      drawRect(head->x,head->y,&snakeCol);
       if (food.growBy){
         food.growBy--;
         score += 1;
